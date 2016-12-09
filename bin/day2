@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day2/keypad'
+
+solution = Advent::Day2::Keypad.new(File.read('lib/advent/day2/input')).solve
+puts solution.to_s
