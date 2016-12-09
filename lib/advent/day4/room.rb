@@ -14,6 +14,7 @@ module Advent
       def initialize(roomspec)
         @debug = !ENV['DEBUG'].nil?
         @encrypted_name, @sector, @checksum = roomspec.match(SPEC_RE).captures
+        @sector = @sector.to_i
 
         puts "Got Room #{@encrypted_name} in sector #{@sector} with checksum #{@checksum}" if @debug
       rescue
@@ -50,7 +51,7 @@ module Advent
       end
 
       def decrypted_name
-        Cipher.decrypt(@encrypted_name.gsub('-', ' '))
+        Cipher.decrypt(@encrypted_name.gsub('-', ' '), @sector)
       end
     end
   end

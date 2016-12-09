@@ -5,7 +5,8 @@ module Advent
 
       def self.decrypt(text, rotations)
         decrypted = ''
-        text.split('').each do |char|
+        
+        text.downcase.split('').each do |char|
           if self.is_letter char
             decrypted << rotate(char, rotations)
           else

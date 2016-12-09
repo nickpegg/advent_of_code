@@ -5,7 +5,15 @@ require 'advent/day4/room'
 
 # Find all valid rooms and give the sum of their sectors
 rooms = File.read('lib/advent/day4/input').split.map { |rs| Advent::Day4::Room.new rs }
+valid_rooms = rooms.select(&:valid?)
 
-sum = rooms.select { |r| r.valid? }.map(&:sector).reduce(&:+)
-
+sum = valid_rooms.map(&:sector).reduce(&:+)
 puts "Sum of the sectors of valid rooms: #{sum}"
+
+valid_rooms.each do |room|
+  name = room.decrypted_name
+  if name.include?('north') && name.include?('pole')
+    puts "#{name} #{room.sector}"
+  end
+end
+
