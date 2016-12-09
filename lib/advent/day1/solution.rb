@@ -4,8 +4,8 @@ module Advent
   module Day1
     # Solves the Day 1 challenge
     class Solution
-      def initialize(input, debug: false)
-        @debug_mode = debug
+      def initialize(input)
+        @debug_mode = !ENV['DEBUG'].nil?
 
         @coords = [0, 0]
         @direction = 0
