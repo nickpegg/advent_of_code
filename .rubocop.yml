@@ -6,3 +6,4 @@ Metrics/MethodLength:
 
 Metrics/CyclomaticComplexity:
   Max: 10
+
