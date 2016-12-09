@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day6/decoder'
+
+puts Advent::Day6::Decoder.new(File.read('lib/advent/day6/input')).decode
+puts Advent::Day6::Decoder.new(File.read('lib/advent/day6/input'), mode: :least).decode
