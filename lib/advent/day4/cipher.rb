@@ -1,24 +1,24 @@
 module Advent
   module Day4
+    # Caesar Cipher
     class Cipher
       ALPHABET = ('a'.ord..'z'.ord).map(&:chr)
 
       def self.decrypt(text, rotations)
         decrypted = ''
-        
+
         text.downcase.split('').each do |char|
-          if self.is_letter char
-            decrypted << rotate(char, rotations)
-          else
-            decrypted << char
-          end
+          decrypted << if letter?(char)
+                         rotate(char, rotations)
+                       else
+                         char
+                       end
         end
 
         decrypted
       end
 
-      private
-      def self.is_letter(char)
+      def self.letter?(char)
         char.ord >= 'a'.ord && char.ord <= 'z'.ord
       end
 

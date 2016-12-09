@@ -27,19 +27,23 @@ module Advent
 
       def calculated_checksum
         letters = @encrypted_name.scan(/\w/)
-        buckets = Hash.new { |h, v| h[v] = [] }
 
-        # I could have sworn Ruby has a built-in for this...
+        checksum = bucket(letters).sort.reverse.map { |_, l| l.sort }.reduce(&:+).take(5).join
+        puts "Calculated this checksum: #{checksum}" if @debug
+        checksum
+      end
+
+      def bucket(letters)
+        buckets = Hash.new { |h, v| h[v] = [] }
         letter_counts = Hash.new 0
+
         letters.each { |l| letter_counts[l] += 1 }
 
         letter_counts.each do |k, v|
           buckets[v] << k
         end
 
-        checksum = buckets.sort.reverse.map { |_, l| l.sort }.reduce(&:+).take(5).join
-        puts "Calculated this checksum: #{checksum}" if @debug
-        checksum
+        buckets
       end
 
       def valid?
@@ -51,7 +55,7 @@ module Advent
       end
 
       def decrypted_name
-        Cipher.decrypt(@encrypted_name.gsub('-', ' '), @sector)
+        Cipher.decrypt(@encrypted_name.tr('-', ' '), @sector)
       end
     end
   end

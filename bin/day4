@@ -16,4 +16,3 @@ valid_rooms.each do |room|
     puts "#{name} #{room.sector}"
   end
 end
-
