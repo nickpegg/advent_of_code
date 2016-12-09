@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day4/room'
+
+# Find all valid rooms and give the sum of their sectors
+rooms = File.read('lib/advent/day4/input').split.map { |rs| Advent::Day4::Room.new rs }
+
+sum = rooms.select { |r| r.valid? }.map(&:sector).reduce(&:+)
+
+puts "Sum of the sectors of valid rooms: #{sum}"
