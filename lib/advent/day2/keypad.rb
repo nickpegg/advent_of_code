@@ -6,13 +6,12 @@ module Advent
       attr_reader :pad, :presses
       attr_accessor :x, :y
 
-      def initialize(input, pad_type: :example, debug: false)
-        @debug = debug
+      def initialize(input, pad_type: :example)
+        @debug = !ENV['DEBUG'].nil?
         @pad = make_pad(pad_type)
 
         # Initial finger position on the 5
-        @x = 1
-        @y = 1
+        @x, @y = starting_position
 
         # Array containing the sequence of presses
         @presses = []
@@ -105,6 +104,17 @@ module Advent
           [nil, 'A', 'B', 'C', nil],
           [nil, nil, 'D', nil, nil]
         ]
+      end
+
+      # Find the starting position. We _always_ start on the 5 key
+      def starting_position
+        (0..@pad.length).each do |y|
+          (0..@pad[y].length).each do |x|
+            return x, y if @pad[y][x] == 5
+          end
+        end
+
+        nil
       end
     end
   end
