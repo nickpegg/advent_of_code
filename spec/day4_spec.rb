@@ -1,6 +1,7 @@
 require 'rspec'
 
 require 'advent/day4/room'
+require 'advent/day4/cipher'
 
 describe Advent::Day4::Room do
   valid_roomspecs = %w(
@@ -27,5 +28,12 @@ describe Advent::Day4::Room do
         it { is_expected.to be_falsey }
       end
     end
+  end
+end
+
+describe Advent::Day4::Cipher do
+  describe '#decrypt' do
+    subject { described_class.decrypt('qzmt zixmtkozy ivhz', 343) }
+    it { is_expected.to eq 'very encrypted name' }
   end
 end

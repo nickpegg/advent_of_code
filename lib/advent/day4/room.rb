@@ -1,3 +1,5 @@
+require 'advent/day4/cipher'
+
 module Advent
   module Day4
     class InvalidRoomSpec < RuntimeError; end
@@ -7,13 +9,13 @@ module Advent
       # Regex for pulling out the needed bits from the roomspec
       SPEC_RE = '((?:\w+\-)+\w+)\-(\d+)\[(\w+)\]'.freeze
 
-      attr_reader :room, :sector, :checksum
+      attr_reader :encrypted_name, :sector, :checksum
 
       def initialize(roomspec)
         @debug = !ENV['DEBUG'].nil?
-        @room, @sector, @checksum = roomspec.match(SPEC_RE).captures
+        @encrypted_name, @sector, @checksum = roomspec.match(SPEC_RE).captures
 
-        puts "Got Room #{@room} in sector #{@sector} with checksum #{@checksum}" if @debug
+        puts "Got Room #{@encrypted_name} in sector #{@sector} with checksum #{@checksum}" if @debug
       rescue
         raise InvalidRoomSpec, "Could not parse roomspec! #{roomspec}"
       end
@@ -23,7 +25,7 @@ module Advent
       end
 
       def calculated_checksum
-        letters = @room.scan(/\w/)
+        letters = @encrypted_name.scan(/\w/)
         buckets = Hash.new { |h, v| h[v] = [] }
 
         # I could have sworn Ruby has a built-in for this...
@@ -45,6 +47,10 @@ module Advent
 
       def valid_checksum?
         @checksum == calculated_checksum
+      end
+
+      def decrypted_name
+        Cipher.decrypt(@encrypted_name.gsub('-', ' '))
       end
     end
   end
