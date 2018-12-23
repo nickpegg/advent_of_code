@@ -61,6 +61,14 @@ class Node(object):
             self.next.prev = node
         self.next = node
 
+    def delete(self):
+        # type: () -> None
+        """
+        Remove this Node from the LinkedList
+        """
+        self.prev.next = self.next
+        self.next.prev = self.prev
+
 
 class Circle(object):
     """
@@ -68,8 +76,8 @@ class Circle(object):
     """
     def __init__(self):
         # type: () -> None
-        self.marbles = blist()   # type: blist[int]
-        self._current_idx = 0
+        self.current_node = None
+        self.head = None
 
     def add(self, marble):
         # type: (int) -> List[int]
@@ -79,42 +87,53 @@ class Circle(object):
         """
         taken = []  # type: List[int]
 
-        if len(self.marbles) == 0:
-            self.marbles = [marble]
+        if self.current_node is None:
+            self.current_node = Node(marble)
+            self.current_node.next = self.current_node
+            self.current_node.prev = self.current_node
+            self.head = self.current_node
             return []
 
         if marble % 23 == 0:
             taken.append(marble)
-            new_idx = self._current_idx - 7
-            while new_idx < 0:
-                new_idx += len(self.marbles)
+            for i in range(6):
+                self.current_node = self.current_node.prev
 
-            taken.append(self.marbles.pop(new_idx))
-            if new_idx == len(self.marbles):
-                new_idx = 0
+            to_take = self.current_node.prev
+            to_take.delete()
+            taken.append(to_take.value)
+            del to_take
         else:
-            new_idx = self._current_idx + 2
+            # advance one
+            self.current_node = self.current_node.next
 
-            # Wrap the index around
-            while new_idx > len(self.marbles):
-                new_idx -= len(self.marbles)
+            # add the marble after this one
+            self.current_node.append(marble)
 
-            self.marbles.insert(new_idx, marble)
+            # advance one more so we're pointing to the new marble
+            self.current_node = self.current_node.next
 
-        self._current_idx = new_idx
-        # self.trim()
         return taken
 
-    def trim(self):
-        # type: () -> None
+    def as_list(self):
+        # type: () -> List[int]
         """
-        Trim the circle of marbles we're not going to touch
+        Return the ring as a list of integers
         """
-        if len(self.marbles) > 1000:
-            print(self._current_idx)
-            assert self._current_idx > 10
-            self.marbles = self.marbles[10:]
-            self._current_idx -= 10
+        da_list = []
+
+        if self.head is None:
+            return []
+
+        cur = self.head
+        da_list.append(cur.value)
+        cur = self.head.next
+
+        while cur != self.head:
+            da_list.append(cur.value)
+            cur = cur.next
+
+        return da_list
 
 
 class Game(object):
@@ -177,9 +196,6 @@ class Game(object):
     def report(self):
         # type () -> None
         print(f"Turn {self._turn}, highest score: {self.high_score}, bag has {len(self._bag._marbles)} marbles left")
-        pos = float(self._circle._current_idx) / len(self._circle.marbles) * 100
-        pos = int(pos)
-        print(f"circle pos: {pos}%")
 
 
 

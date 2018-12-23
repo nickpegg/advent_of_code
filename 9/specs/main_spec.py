@@ -60,27 +60,32 @@ with describe(Circle) as self:
         self.circle = Circle()
 
     with it('can add a marble when it is empty'):
-        expect(self.circle.marbles).to(be_empty)
+        expect(self.circle.as_list()).to(be_empty)
 
         self.circle.add(5)
-        expect(self.circle.marbles).to(equal([5]))
+        expect(self.circle.as_list()).to(equal([5]))
 
     with it('looks right with 5 marbles added'):
-        expect(self.circle.marbles).to(be_empty)
+        expect(self.circle.as_list()).to(be_empty)
 
         for m in range(5):
             self.circle.add(m)
 
-        expect(self.circle.marbles).to(equal([0,4,2,1,3]))
+        expect(self.circle.as_list()).to(equal([0,4,2,1,3]))
 
     with it('handles adding the marble 23 correctly'):
         for m in range(5):
             self.circle.add(m)
         self.circle.add(23)
 
-        expect(self.circle.marbles).to(equal([0,4,2,1]))
-        expect(self.circle._current_idx).to(be_below(len(self.circle.marbles)))
-        expect(self.circle._current_idx).to(be_above_or_equal(0))
+        expect(self.circle.as_list()).to(equal([0,4,2,1]))
+
+    with it('handles the first example case'):
+        for m in range(26):
+            self.circle.add(m)
+        expect(self.circle.as_list()).to(equal([
+            0,16,8,17,4,18,19,2,24,20,25,10,21,5,22,11,1,12,6,13,3,14,7,15
+        ]))
 
 
 with describe(solution1) as self:
