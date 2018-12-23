@@ -4,12 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+blist = "*"
+
+[dev-packages]
+mamba = "*"
+expects = "*"
 pytest = "*"
 ipython = "*"
 pytest-watch = "*"
 mypy = "*"
-
-[dev-packages]
 
 [requires]
 python_version = "3.6"
