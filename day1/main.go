@@ -42,7 +42,7 @@ func partOne(nums []int) int {
 	sumTo := 2020
 	jawns := make(map[int]bool)
 
-	for _, num := range(nums) {
+	for _, num := range nums {
 		candidate := sumTo - num
 		_, exists := jawns[candidate]
 		if exists {
@@ -56,10 +56,10 @@ func partOne(nums []int) int {
 
 func partTwo(nums []int) int {
 	// Fukkit, brute force time
-	for _, i := range(nums) {
-		for _, j := range(nums) {
-			for _, k := range(nums) {
-				if i + j + k == 2020 {
+	for _, i := range nums {
+		for _, j := range nums {
+			for _, k := range nums {
+				if i+j+k == 2020 {
 					return i * j * k
 				}
 			}

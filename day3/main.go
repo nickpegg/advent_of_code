@@ -7,14 +7,16 @@ import (
 	util "github.com/nickpegg/advent_of_code/2020/common"
 )
 
-type traversal struct{
+type traversal struct {
 	Right int
-	Down int
+	Down  int
 }
 
 func main() {
 	data, err := util.ReadLines("input")
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	treeMap := parseMap(data)
 
 	fmt.Println("Part 1:", partOne(treeMap))
@@ -35,7 +37,7 @@ func partTwo(treeMap [][]string) int {
 		traversal{1, 2},
 	}
 
-	for _, step := range(steps) {
+	for _, step := range steps {
 		trees := traverse(treeMap, step)
 		result *= trees
 	}
@@ -46,7 +48,7 @@ func partTwo(treeMap [][]string) int {
 // is Y, second is X
 func parseMap(tree_map []string) [][]string {
 	newMap := make([][]string, len(tree_map))
-	for i, s := range(tree_map) {
+	for i, s := range tree_map {
 		newMap[i] = strings.Split(s, "")
 	}
 	return newMap

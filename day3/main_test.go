@@ -10,7 +10,9 @@ import (
 
 func getTestInput(t *testing.T) [][]string {
 	data, err := util.ReadLines("test_input")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	return parseMap(data)
 }
 
