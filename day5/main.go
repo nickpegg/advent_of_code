@@ -14,7 +14,9 @@ const (
 
 func main() {
 	lines, err := util.ReadLines("input")
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Part 1:", partOne(lines))
 	fmt.Println("Part 2:", partTwo(lines))
@@ -24,7 +26,7 @@ func partOne(lines []string) int {
 	// Find highest seat ID
 	highestSid := 0
 
-	for _, line := range(lines) {
+	for _, line := range lines {
 		sid := walk(line)
 		if sid > highestSid {
 			highestSid = sid
@@ -49,13 +51,13 @@ func partTwo(lines []string) []int {
 		}
 	}
 
-	for _, line := range(lines) {
+	for _, line := range lines {
 		sid := walk(line)
 		sids[sid] = true
 	}
 
 	// okay, find the seat
-	for sid, exists := range(sids) {
+	for sid, exists := range sids {
 		if !exists && sids[sid-1] && sids[sid+1] {
 			candidates = append(candidates, sid)
 		}
@@ -69,12 +71,16 @@ func walk(rules string) int {
 	var err error
 
 	zone := NewZone(planeRows, planeCols)
-	for _, rule := range(strings.TrimSpace(rules)) {
+	for _, rule := range strings.TrimSpace(rules) {
 		zone, err = zone.Bisect(rule)
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 	}
 	row, col, err := zone.Seat()
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	sid := SeatID(row, col)
 	return sid
 }
