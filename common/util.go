@@ -17,7 +17,7 @@ func ReadLines(filename string) ([]string, error) {
   goodLines := make([]string, 0)
   for _, line := range(lines) {
     if line != "" {
-      goodLines = append(goodLines, line)
+      goodLines = append(goodLines, strings.TrimSpace(line))
     }
   }
   return goodLines, nil
