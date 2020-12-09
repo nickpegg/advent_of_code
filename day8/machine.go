@@ -19,7 +19,7 @@ type Instruction struct {
 	Value int
 }
 
-// RunNoLoop execute the stored program, stopping if a loop is detected
+// Run executes the stored program, stopping and returning an error if a loop is detected
 func (m *Machine) Run() error {
 	pcValues := make(map[int]bool)
 
@@ -46,7 +46,8 @@ func (m *Machine) Run() error {
 	return nil
 }
 
-// LoadScript reads a machine script from a text file, one instruction per line
+// LoadScript reads a machine script from a text file, one instruction per line, and returns a slice
+// of Instruction structs
 func LoadScript(filename string) ([]Instruction, error) {
 	instructions := make([]Instruction, 0)
 
