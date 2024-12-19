@@ -7,10 +7,7 @@ fn main() {
 }
 
 fn part1() -> Result<(), Box<dyn Error>> {
-    let safe_count = parse_input()?
-        .into_iter()
-        .filter(|r| is_safe(r))
-        .count();
+    let safe_count = parse_input()?.into_iter().filter(|r| is_safe(r)).count();
     println!("Part 1 solution: {}", safe_count);
     Ok(())
 }

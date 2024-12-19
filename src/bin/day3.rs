@@ -26,13 +26,17 @@ fn part2() {
     let mut operate = true;
     for instr in parse_input().unwrap() {
         match instr {
-            Instruction::Mul {x, y} => {
+            Instruction::Mul { x, y } => {
                 if operate {
                     result += x * y;
                 }
-            },
-            Instruction::Do => { operate = true; },
-            Instruction::Dont => { operate = false; },
+            }
+            Instruction::Do => {
+                operate = true;
+            }
+            Instruction::Dont => {
+                operate = false;
+            }
         }
     }
     println!("Part 2 result: {}", result);
@@ -40,7 +44,7 @@ fn part2() {
 
 fn compute(instr: Instruction) -> i32 {
     match instr {
-        Instruction::Mul {x, y} => x * y,
+        Instruction::Mul { x, y } => x * y,
         Instruction::Do | Instruction::Dont => 0,
     }
 }
@@ -58,7 +62,7 @@ fn parse_input() -> Result<Vec<Instruction>, Box<dyn Error>> {
                     x: args.next().unwrap().parse()?,
                     y: args.next().unwrap().parse()?,
                 }
-            },
+            }
             "do" => Instruction::Do,
             "don't" => Instruction::Dont,
             i => return Err(format!("Unrecognized instruction: {}", i).into()),
