@@ -90,7 +90,7 @@ fn main() {
     part1(input);
 }
 
-fn part1(input: Vec<Vec<char>>) {
+fn part1(input: Vec<Vec<char>>) -> i32 {
     // 714 - too low
     // 1479 - too low
     let mut walker = GridWalker::new(input);
@@ -139,6 +139,7 @@ fn part1(input: Vec<Vec<char>>) {
     }
 
     println!("Part 1: {count}");
+    count
 }
 
 fn parse_input(input: &str) -> Vec<Vec<char>> {
@@ -146,4 +147,17 @@ fn parse_input(input: &str) -> Vec<Vec<char>> {
         .lines()
         .map(|l| l.chars().collect())
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Make sure part 1 works with the test input
+    #[test]
+    fn basic_case() {
+        let input = parse_input(include_str!("../../data/day4_test.txt"));
+        let result = part1(input);
+        assert_eq!(result, 18);
+    }
 }
