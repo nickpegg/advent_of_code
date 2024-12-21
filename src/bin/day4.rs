@@ -2,28 +2,29 @@ use std::marker::Copy;
 
 const WORD: [char; 4] = ['X', 'M', 'A', 'S'];
 
-struct Direction;
-impl Direction {
-    pub const NORTH: (i8, i8) = (0, -1);
-    pub const SOUTH: (i8, i8) = (0, 1);
-    pub const EAST: (i8, i8) = (1, 0);
-    pub const WEST: (i8, i8) = (-1, 0);
+type Direction = (i8, i8);
+struct Directions;
+impl Directions {
+    pub const NORTH: Direction = (0, -1);
+    pub const SOUTH: Direction = (0, 1);
+    pub const EAST: Direction = (1, 0);
+    pub const WEST: Direction = (-1, 0);
 
-    pub const NORTHEAST: (i8, i8) = (1, -1);
-    pub const SOUTHEAST: (i8, i8) = (1, 1);
-    pub const SOUTHWEST: (i8, i8) = (-1, 1);
-    pub const NORTHWEST: (i8, i8) = (-1, -1);
+    pub const NORTHEAST: Direction = (1, -1);
+    pub const SOUTHEAST: Direction = (1, 1);
+    pub const SOUTHWEST: Direction = (-1, 1);
+    pub const NORTHWEST: Direction = (-1, -1);
 
     // All directions, useful for iterating over
-    pub const ALL: [(i8, i8); 8] = [
-        Direction::NORTH,
-        Direction::NORTHEAST,
-        Direction::EAST,
-        Direction::SOUTHEAST,
-        Direction::SOUTH,
-        Direction::SOUTHWEST,
-        Direction::WEST,
-        Direction::NORTHWEST,
+    pub const ALL: [Direction; 8] = [
+        Directions::NORTH,
+        Directions::NORTHEAST,
+        Directions::EAST,
+        Directions::SOUTHEAST,
+        Directions::SOUTH,
+        Directions::SOUTHWEST,
+        Directions::WEST,
+        Directions::NORTHWEST,
     ];
 }
 
@@ -59,7 +60,7 @@ impl<T: Copy> GridWalker<T> {
 
     // Look at what's in that direction on the grid, but don't walk there. Returns None if that
     // direction would take us off the grid
-    fn peek_direction(&self, dir: &(i8, i8)) -> Option<T> {
+    fn peek_direction(&self, dir: &Direction) -> Option<T> {
         let x = self.pos.x.checked_add_signed(dir.0.into())?;
         let y = self.pos.y.checked_add_signed(dir.1.into())?;
 
@@ -72,7 +73,7 @@ impl<T: Copy> GridWalker<T> {
 
     // Take a step in that direction, and return what's there. Returns an error without taking a
     // step if we would have walked off the grid
-    fn step(&mut self, dir: &(i8, i8)) -> Result<T, OffGridError> {
+    fn step(&mut self, dir: &Direction) -> Result<T, OffGridError> {
         let x = self.pos.x.checked_add_signed(dir.0.into()).ok_or(OffGridError)?;
         let y = self.pos.y.checked_add_signed(dir.1.into()).ok_or(OffGridError)?;
 
@@ -106,7 +107,7 @@ fn part1(input: Vec<Vec<char>>) -> i32 {
             if walker.peek() == WORD[0] {
                 // Found the start of our word
                 println!("Found an X");
-                for direction in Direction::ALL {
+                for direction in Directions::ALL {
                     println!("Walking {direction:?}");
                     let mut word_pos = 0;
 
@@ -155,7 +156,7 @@ mod tests {
 
     // Make sure part 1 works with the test input
     #[test]
-    fn basic_case() {
+    fn test_part1() {
         let input = parse_input(include_str!("../../data/day4_test.txt"));
         let result = part1(input);
         assert_eq!(result, 18);
