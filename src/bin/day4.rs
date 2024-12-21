@@ -45,12 +45,15 @@ struct GridWalker<T: Copy> {
 
 impl<T: Copy> GridWalker<T> {
     fn new(grid: Vec<Vec<T>>) -> Self {
-        Self { grid: grid, pos: Position {x: 0, y: 0} }
+        Self {
+            grid: grid,
+            pos: Position { x: 0, y: 0 },
+        }
     }
 
     // Move the position to the x/y coordinate
     fn move_pos(&mut self, x: usize, y: usize) {
-        self.pos = Position {x, y};
+        self.pos = Position { x, y };
     }
 
     // Returns the value at the current position
@@ -74,27 +77,36 @@ impl<T: Copy> GridWalker<T> {
     // Take a step in that direction, and return what's there. Returns an error without taking a
     // step if we would have walked off the grid
     fn step(&mut self, dir: &Direction) -> Result<T, OffGridError> {
-        let x = self.pos.x.checked_add_signed(dir.0.into()).ok_or(OffGridError)?;
-        let y = self.pos.y.checked_add_signed(dir.1.into()).ok_or(OffGridError)?;
+        let x = self
+            .pos
+            .x
+            .checked_add_signed(dir.0.into())
+            .ok_or(OffGridError)?;
+        let y = self
+            .pos
+            .y
+            .checked_add_signed(dir.1.into())
+            .ok_or(OffGridError)?;
 
         if y > self.grid.len() || x > self.grid[y].len() {
             return Err(OffGridError);
         }
 
-        self.pos = Position {x, y};
+        self.pos = Position { x, y };
         Ok(self.grid[y][x])
     }
 }
 
 fn main() {
     let input = parse_input(include_str!("../../data/day4.txt"));
-    part1(input);
+    part1(&input);
+    part2(&input);
 }
 
-fn part1(input: Vec<Vec<char>>) -> i32 {
+fn part1(input: &Vec<Vec<char>>) -> i32 {
     // 714 - too low
     // 1479 - too low
-    let mut walker = GridWalker::new(input);
+    let mut walker = GridWalker::new(input.clone());
     let mut count = 0;
 
     for y in 0..walker.grid.len() {
@@ -102,28 +114,21 @@ fn part1(input: Vec<Vec<char>>) -> i32 {
             walker.move_pos(x, y);
             println!("Walker at {:?}", walker.pos);
 
-            // TODO remove debug
-            println!("{}", walker.peek());
             if walker.peek() == WORD[0] {
                 // Found the start of our word
-                println!("Found an X");
                 for direction in Directions::ALL {
-                    println!("Walking {direction:?}");
                     let mut word_pos = 0;
 
                     while let Some(letter) = walker.peek_direction(&direction) {
                         println!("{}", letter);
                         if letter == WORD[word_pos + 1] {
-                            println!("yes..");
                             walker.step(&direction).unwrap();
                             word_pos += 1;
                         } else {
-                            println!("Nope");
                             break;
                         }
 
                         if word_pos == WORD.len() - 1 {
-                            println!("YES! Counting it");
                             // Got to the end of the word, add it to our count
                             count += 1;
                             break;
@@ -133,7 +138,6 @@ fn part1(input: Vec<Vec<char>>) -> i32 {
                     // Make sure to put the walker back after a walk
                     walker.move_pos(x, y);
                     println!("Walker at {:?}", walker.pos);
-
                 }
             }
         }
@@ -143,11 +147,48 @@ fn part1(input: Vec<Vec<char>>) -> i32 {
     count
 }
 
+fn part2(input: &Vec<Vec<char>>) -> i32 {
+    let mut walker = GridWalker::new(input.clone());
+    let mut count = 0;
+
+    for y in 1..(walker.grid.len() - 1) {
+        for x in 1..(walker.grid[y].len() - 1) {
+            walker.move_pos(x, y);
+
+            if walker.peek() == 'A' {
+                // check northwest + southeast
+                let Some(nw) = walker.peek_direction(&Directions::NORTHWEST) else {
+                    continue;
+                };
+                let Some(se) = walker.peek_direction(&Directions::SOUTHEAST) else {
+                    continue;
+                };
+                if (nw, se) != ('M', 'S') && (nw, se) != ('S', 'M') {
+                    continue;
+                }
+
+                // check northeast + southwest
+                let Some(ne) = walker.peek_direction(&Directions::NORTHEAST) else {
+                    continue;
+                };
+                let Some(sw) = walker.peek_direction(&Directions::SOUTHWEST) else {
+                    continue;
+                };
+                if (ne, sw) != ('M', 'S') && (ne, sw) != ('S', 'M') {
+                    continue;
+                }
+
+                count += 1;
+            }
+        }
+    }
+
+    println!("Part 2: {count}");
+    count
+}
+
 fn parse_input(input: &str) -> Vec<Vec<char>> {
-    input
-        .lines()
-        .map(|l| l.chars().collect())
-        .collect()
+    input.lines().map(|l| l.chars().collect()).collect()
 }
 
 #[cfg(test)]
@@ -158,7 +199,14 @@ mod tests {
     #[test]
     fn test_part1() {
         let input = parse_input(include_str!("../../data/day4_test.txt"));
-        let result = part1(input);
+        let result = part1(&input);
         assert_eq!(result, 18);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = parse_input(include_str!("../../data/day4_test.txt"));
+        let result = part2(&input);
+        assert_eq!(result, 9);
     }
 }
