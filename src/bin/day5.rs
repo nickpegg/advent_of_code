@@ -1,4 +1,5 @@
 use log::{debug, error};
+use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::num::ParseIntError;
 
@@ -6,10 +7,17 @@ fn main() {
     env_logger::init();
 
     let (rules, updates) = parse_input(include_str!("../../data/day5.txt"));
-    println!("Part 1 solution: {}", part1(&rules, &updates));
+    println!("Part 1 solution: {}", part1(&rules, updates.clone()));
+    println!("Part 2 solution: {}", part2(&rules, updates));
 }
 
-fn parse_input(s: &str) -> (HashMap<u32, HashSet<u32>>, Vec<Vec<u32>>) {
+// Map of page ordering rules. The keys are page numbers which must come before the numbers
+// contained in the values (set of numbers)
+type Rules = HashMap<u32, HashSet<u32>>;
+
+type Updates = Vec<Vec<u32>>;
+
+fn parse_input(s: &str) -> (Rules, Updates) {
     let mut rules = HashMap::new();
     let mut updates = Vec::new();
 
@@ -42,18 +50,49 @@ fn parse_input(s: &str) -> (HashMap<u32, HashSet<u32>>, Vec<Vec<u32>>) {
     (rules, updates)
 }
 
-fn part1(rules: &HashMap<u32, HashSet<u32>>, updates: &Vec<Vec<u32>>) -> u32 {
+fn part1(rules: &Rules, updates: Updates) -> u32 {
     // Find all correct updates
-    let mut correct_updates = Vec::new();
+    let (correct_updates, _) = bucket_updates(&rules, updates);
+
+    // Get the sum of the middle number from each update
+    correct_updates
+        .into_iter()
+        .fold(0, |acc, u| acc + u[u.len() / 2])
+}
+
+fn part2(rules: &Rules, updates: Updates) -> u32 {
+    let (_, mut incorrect) = bucket_updates(&rules, updates);
+
+    for update in &mut incorrect {
+        // Fix the incorrect updates by sorting them according to the rules.
+        // Rules in text are like "a|b" meaning A must come before B, and we store these rules in a
+        // Map of Sets, where the values of the sets are all the pages the key must come before.
+        update.sort_by(|a, b| match rules.get(&a) {
+            Some(r) => match r.contains(&b) {
+                true => Ordering::Less,
+                false => Ordering::Equal,
+            },
+            None => Ordering::Equal,
+        });
+    }
+
+    incorrect.into_iter().fold(0, |acc, u| acc + u[u.len() / 2])
+}
+
+// Bucket updates into two lists: correct ones an incorrect ones
+fn bucket_updates(rules: &Rules, updates: Updates) -> (Updates, Updates) {
+    let mut correct: Updates = Vec::new();
+    let mut incorrect: Updates = Vec::new();
+
     for update in updates {
         let mut seen: HashSet<u32> = HashSet::new();
         let mut good = true;
 
-        for num in update {
-            seen.insert(*num);
+        for num in &update {
+            seen.insert(num.clone());
             // Get the set of pages that this page must come before. If this page doesn't exist in
             // the rules, then we're good and can continue
-            let Some(others) = rules.get(num) else {
+            let Some(others) = rules.get(&num) else {
                 continue;
             };
 
@@ -66,16 +105,14 @@ fn part1(rules: &HashMap<u32, HashSet<u32>>, updates: &Vec<Vec<u32>>) -> u32 {
         }
         if good {
             debug!("Good update: {:?}", update);
-            correct_updates.push(update);
+            correct.push(update);
         } else {
             debug!("Bad update: {:?}", update);
+            incorrect.push(update);
         }
     }
 
-    // Get the sum of the middle number from each update
-    correct_updates
-        .into_iter()
-        .fold(0, |acc, u| acc + u[u.len() / 2])
+    (correct, incorrect)
 }
 
 #[cfg(test)]
@@ -92,7 +129,17 @@ mod tests {
         let (rules, updates) = parse_input(include_str!("../../data/day5_test.txt"));
         assert!(rules.len() > 0);
         assert!(updates.len() > 0);
-        let result = part1(&rules, &updates);
+        let result = part1(&rules, updates);
         assert_eq!(result, 143);
+    }
+
+    #[test]
+    fn test_part2() {
+        init();
+        let (rules, updates) = parse_input(include_str!("../../data/day5_test.txt"));
+        assert!(rules.len() > 0);
+        assert!(updates.len() > 0);
+        let result = part2(&rules, updates);
+        assert_eq!(result, 123);
     }
 }
