@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 blist = "*"
+click = "*"
+progress = "*"
 
 [dev-packages]
 mamba = "*"
