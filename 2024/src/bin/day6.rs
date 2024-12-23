@@ -6,6 +6,7 @@ fn main() {
     env_logger::init();
     let s = include_str!("../../data/day6.txt");
     let w = Walker::from_str(s).unwrap();
+    println!("Part 2: {}", part2(&w));
     println!("Part 1: {}", part1(w));
 }
 
@@ -25,11 +26,12 @@ enum Turn {
     CounterClockwise,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Walker {
     // two-dimensional grid, obstructions are a true value
     grid: Vec<Vec<bool>>,
     pos: (usize, usize),
+    last_pos: (usize, usize),
     dir: Dir,
 }
 
@@ -59,6 +61,7 @@ impl Walker {
         Ok(Walker {
             grid,
             pos,
+            last_pos: pos,
             dir: Dir::North,
         })
     }
@@ -70,7 +73,7 @@ impl Walker {
             Turn::Clockwise => dirs = DIRS_CLOCKWISE,
             Turn::CounterClockwise => dirs = DIRS_COUNTER_CLOCKWISE,
         }
-        debug!("Turning {:?}", t);
+        debug!("Turning {:?} at {},{}", t, self.pos.0, self.pos.1);
 
         self.dir = dirs
             .iter()
@@ -106,6 +109,7 @@ impl Walker {
             return StepResult::Obstructed;
         }
 
+        self.last_pos = self.pos;
         self.pos.0 = x;
         self.pos.1 = y;
 
@@ -159,8 +163,78 @@ fn part1(mut walker: Walker) -> usize {
     steps.len()
 }
 
+// How many different spots could we add an obstruction and get the walker into a loop?
+fn part2(walker: &Walker) -> u32 {
+    // Too low - 186
+    let mut loops = 0;
+
+    for x in 1..walker.grid.len() {
+        for y in 1..walker.grid[x].len() {
+            // Tortise and hare algorithm for finding a loop
+            // https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_tortoise_and_hare
+            let mut tortise = walker.clone();
+            debug!("Trying obstruction at {x},{y}");
+            tortise.grid[x][y] = true;
+
+            let mut hare = tortise.clone();
+
+            // Limiting our iterations is a guard rail to prevent us from looping forever
+            let max_iterations = 1_000_000;
+            for i in 0..max_iterations {
+                // Flag to tell if either one of them escaped the grid
+                let mut escaped = false;
+
+                match tortise.step() {
+                    StepResult::Stepped => {}
+                    StepResult::Obstructed => tortise.turn(Turn::Clockwise),
+                    StepResult::OffGrid => {
+                        debug!("Tortise escaped the grid");
+                        escaped = true;
+                    }
+                }
+
+                let mut hare_step_count = 0;
+                while hare_step_count < 2 {
+                    match hare.step() {
+                        StepResult::Stepped => hare_step_count += 1,
+                        StepResult::Obstructed => hare.turn(Turn::Clockwise),
+                        StepResult::OffGrid => {
+                            debug!("Hare escaped the grid");
+                            escaped = true;
+                            break;
+                        }
+                    }
+                }
+
+                if i == max_iterations - 1 {
+                    panic!("Hit max iterations checking obstruction at {x},{y}");
+                }
+
+                if escaped {
+                    break;
+                }
+
+                if tortise.pos == hare.pos && tortise.last_pos == hare.last_pos {
+                    debug!(
+                        "Last positions - Tortise ({},{}) - Hare ({},{})",
+                        tortise.last_pos.0, tortise.last_pos.1, hare.last_pos.0, hare.last_pos.1,
+                    );
+                    debug!(
+                        "Loop detected for {x},{y}, both ended up at {:?}",
+                        tortise.pos
+                    );
+                    loops += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    loops
+}
+
 #[cfg(test)]
-mod tests {
+mod day6_tests {
     use super::*;
 
     fn init() {
@@ -171,7 +245,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn parse() {
+        fn test_parse() {
             init();
             let walker = Walker::from_str(include_str!("../../data/day6_test.txt")).unwrap();
             assert_eq!(walker.pos, (4, 6));
@@ -183,7 +257,7 @@ mod tests {
         }
 
         #[test]
-        fn turn() {
+        fn test_turn() {
             init();
             let mut walker = Walker::from_str(include_str!("../../data/day6_test.txt")).unwrap();
             // Should start facing north
@@ -199,7 +273,7 @@ mod tests {
         }
 
         #[test]
-        fn step() {
+        fn test_step() {
             init();
             let mut walker = Walker::from_str(include_str!("../../data/day6_test.txt")).unwrap();
             assert_eq!(walker.pos, (4, 6));
@@ -228,13 +302,18 @@ mod tests {
         assert_eq!(result, 41);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     init();
-    //     let (rules, updates) = parse_input(include_str!("../../data/day5_test.txt"));
-    //     assert!(rules.len() > 0);
-    //     assert!(updates.len() > 0);
-    //     let result = part2(&rules, updates);
-    //     assert_eq!(result, 123);
-    // }
+    #[test]
+    // Should get in a loop with a new obstruction at:
+    // 1,8
+    // 3,6
+    // 3,8
+    // 6,7
+    // 7,7
+    // 7,9
+    fn test_part2() {
+        init();
+        let walker = Walker::from_str(include_str!("../../data/day6_test.txt")).unwrap();
+        let result = part2(&walker);
+        assert_eq!(result, 6);
+    }
 }
