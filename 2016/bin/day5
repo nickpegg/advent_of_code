@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day5/password'
+require 'advent/day5/positioned_password'
+
+if ARGV[0].nil?
+  puts 'Usage: bin/day5 door_id'
+  exit 1
+end
+
+generator = Advent::Day5::Password.new ARGV[0]
+puts 'Generating...'
+puts "Password: #{generator.generate}"
+
+generator = Advent::Day5::PositionedPassword.new ARGV[0]
+puts 'Generating second password...'
+puts "Second password: #{generator.generate}"

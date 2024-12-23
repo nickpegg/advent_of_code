@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day7/ip_address'
+
+i = 0
+File.readlines('inputs/day7.txt').each do |line|
+  i += 1 if Advent::Day7::IPAddress.new(line.strip).supports_tls?
+end
+
+puts i
+# x = File.readlines('inputs/day7.txt').count do |line|
+#   Advent::Day7::IPAddress.new(line.strip).supports_tls2?
+# end
+# puts x

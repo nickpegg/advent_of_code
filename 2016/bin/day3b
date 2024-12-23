@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day3/triangle'
+
+grid = File.read('lib/advent/day3/input').split("\n").map do |line|
+  line.split.map(&:to_i)
+end
+
+valid_triangles = grid.transpose.reduce(&:+).each_slice(3).select do |triangle|
+  Advent::Day3::Triangle.new(triangle).valid?
+end
+
+puts "There are #{valid_triangles.length} number of valid triangles"

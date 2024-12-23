@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require 'advent/day1/solution'
+
+Advent::Day1::Solution.new(File.read('lib/advent/day1/input')).print_solution
