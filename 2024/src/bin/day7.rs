@@ -1,15 +1,18 @@
 use std::error::Error;
 use std::fmt;
 
+use indicatif::ProgressIterator;
 use itertools::Itertools;
 use log::debug;
+
+use aoc2024::progress_style;
 
 fn main() {
     env_logger::init();
     let s = include_str!("../../data/day7.txt");
     let input = parse_input(s).unwrap();
-    // println!("Part 2: {}", part2());
-    println!("Part 1: {:?}", part1(&input));
+    println!("Part 1: {}", part1(&input));
+    println!("Part 2: {}", part2(&input));
 }
 
 type ProblemInput = Vec<(u64, Vec<u64>)>;
@@ -31,6 +34,7 @@ impl Error for ParseError {}
 enum Oper {
     Add,
     Mul,
+    Concat,
 }
 
 impl fmt::Display for Oper {
@@ -38,6 +42,7 @@ impl fmt::Display for Oper {
         match self {
             Oper::Add => write!(f, "+")?,
             Oper::Mul => write!(f, "*")?,
+            Oper::Concat => write!(f, "||")?,
         };
         Ok(())
     }
@@ -78,16 +83,26 @@ fn perform(oper: &Oper, a: &u64, b: &u64) -> u64 {
     match oper {
         Oper::Add => a + b,
         Oper::Mul => a * b,
+        Oper::Concat => (a.to_string() + &b.to_string()).parse().unwrap(),
     }
 }
 
 fn part1(input: &ProblemInput) -> u64 {
+    calibration_result(&input, vec![Oper::Add, Oper::Mul])
+}
+
+fn part2(input: &ProblemInput) -> u64 {
+    calibration_result(&input, vec![Oper::Add, Oper::Mul, Oper::Concat])
+}
+
+fn calibration_result(input: &ProblemInput, operations: Vec<Oper>) -> u64 {
     let mut sum = 0;
-    for (value, orig_numbers) in input {
+    for (value, orig_numbers) in input.into_iter().progress_with_style(progress_style()) {
+        // for (value, orig_numbers) in input.into_iter().progress() {
         // Generate the list of all possible operations, which should be 1 shorter than our number
         // list
         let possible_operations: Vec<Vec<Oper>> = (0..(orig_numbers.len() - 1))
-            .map(|_| [Oper::Add, Oper::Mul])
+            .map(|_| operations.clone())
             .multi_cartesian_product()
             .collect();
         debug!(
@@ -129,6 +144,7 @@ fn part1(input: &ProblemInput) -> u64 {
             }
         }
     }
+
     sum
 }
 
@@ -145,5 +161,12 @@ mod day7_tests {
         init();
         let input = parse_input(include_str!("../../data/day7_test.txt")).unwrap();
         assert_eq!(part1(&input), 3749);
+    }
+
+    #[test]
+    fn test_part2() {
+        init();
+        let input = parse_input(include_str!("../../data/day7_test.txt")).unwrap();
+        assert_eq!(part2(&input), 11387);
     }
 }
