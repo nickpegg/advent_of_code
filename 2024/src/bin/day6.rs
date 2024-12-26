@@ -23,6 +23,7 @@ const DIRS_COUNTER_CLOCKWISE: [Dir; 4] = [Dir::North, Dir::West, Dir::South, Dir
 #[derive(Debug)]
 enum Turn {
     Clockwise,
+    #[allow(dead_code)]
     CounterClockwise,
 }
 
