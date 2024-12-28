@@ -39,9 +39,9 @@ impl ops::Sub<&Distance> for Point {
     type Output = Option<Point>;
 
     // Subtract a distance from a point. Returns None if either X or Y of the point is <0
-    fn sub(self, other: &Distance) -> Self::Output {
-        let x = i64::from(self.0).checked_sub(other.0)?;
-        let y = i64::from(self.1).checked_sub(other.1)?;
+    fn sub(self, dist: &Distance) -> Self::Output {
+        let x = i64::from(self.0).checked_sub(dist.0)?;
+        let y = i64::from(self.1).checked_sub(dist.1)?;
 
         Some(Self(x.try_into().ok()?, y.try_into().ok()?))
     }
@@ -50,9 +50,9 @@ impl ops::Sub<&Distance> for Point {
 impl ops::Sub for Point {
     type Output = Distance;
 
-    fn sub(self, other: Self) -> Self::Output {
-        let x: i64 = i64::from(self.0) - i64::from(other.0);
-        let y: i64 = i64::from(self.1) - i64::from(other.1);
+    fn sub(self, dist: Self) -> Self::Output {
+        let x: i64 = i64::from(self.0) - i64::from(dist.0);
+        let y: i64 = i64::from(self.1) - i64::from(dist.1);
         Distance(x, y)
     }
 }
@@ -125,9 +125,65 @@ fn part1(map: &AntennaMap) -> HashSet<Point> {
     antinodes
 }
 
+// Like part 1, but antinodes extend forever away from the two antennas
 fn part2(map: &AntennaMap) -> HashSet<Point> {
-    let antinodes = HashSet::new();
-    // TODO - find antinodes, but they extend forever
+    let mut antinodes: HashSet<Point> = HashSet::new();
+    for (freq, points) in &map.antennas {
+        debug!("Finding antinodes for {freq} {points:?}");
+        for (&a, &b) in points.iter().tuple_combinations() {
+            debug!("  Comparing {a}, {b}");
+            let distance = b - a;
+            debug!("  Distance is {distance:?}");
+            // Walk in each direction off of A and B until we end up off the grid marking antinodes
+            // along the way.
+
+            let mut a2 = a.clone();
+            while let Some(point) = a2 - &distance {
+                a2 = point;
+                if point.0 <= map.bounds.0 && point.1 <= map.bounds.1 {
+                    debug!("    Antinode @ {point}");
+                    antinodes.insert(point);
+                } else {
+                    debug!("    Point {point} outside of range {}", map.bounds);
+                    break;
+                }
+            }
+            let mut a2 = a.clone();
+            while let Some(point) = a2 + &distance {
+                a2 = point;
+                if point.0 <= map.bounds.0 && point.1 <= map.bounds.1 {
+                    debug!("    Antinode @ {point}");
+                    antinodes.insert(point);
+                } else {
+                    debug!("    Point {point} outside of range {}", map.bounds);
+                    break;
+                }
+            }
+
+            let mut b2 = b.clone();
+            while let Some(point) = b2 - &distance {
+                b2 = point;
+                if point.0 <= map.bounds.0 && point.1 <= map.bounds.1 {
+                    debug!("    Antinode @ {point}");
+                    antinodes.insert(point);
+                } else {
+                    debug!("    Point {point} outside of range {}", map.bounds);
+                    break;
+                }
+            }
+            let mut b2 = b.clone();
+            while let Some(point) = b2 + &distance {
+                b2 = point;
+                if point.0 <= map.bounds.0 && point.1 <= map.bounds.1 {
+                    debug!("    Antinode @ {point}");
+                    antinodes.insert(point);
+                } else {
+                    debug!("    Point {point} outside of range {}", map.bounds);
+                    break;
+                }
+            }
+        }
+    }
     antinodes
 }
 
@@ -178,10 +234,47 @@ mod day8_tests {
         assert_eq!(antinodes.len(), 14);
     }
 
-    //#[test]
-    //fn test_part2() {
-    //    init();
-    //    let input = parse_input(include_str!("../../data/day8_test.txt")).unwrap();
-    //    assert_eq!(part2(&input), 11387);
-    //}
+    #[test]
+    fn test_part2() {
+        init();
+        let _ = init();
+        let input = AntennaMap::from_str(include_str!("../../data/day8_test.txt")).unwrap();
+        let antinodes = part2(&input);
+
+        let mut expected: HashSet<Point> = (0..12).map(|i| Point(i, i)).collect();
+        expected = expected
+            .union(&HashSet::from([
+                Point(1, 0),
+                Point(1, 10),
+                Point(2, 3),
+                Point(2, 8),
+                Point(3, 1),
+                Point(3, 11),
+                Point(4, 2),
+                Point(6, 5),
+                Point(6, 0),
+                Point(9, 4),
+                Point(1, 5),
+                Point(11, 5),
+                Point(3, 6),
+                Point(0, 7),
+                Point(5, 7),
+                Point(4, 9),
+                Point(10, 2),
+                Point(10, 11),
+                Point(11, 0),
+                Point(8, 1),
+                Point(7, 3),
+                Point(5, 2),
+            ]))
+            .map(|p| *p)
+            .collect();
+        assert_eq!(expected.len(), 34);
+        let extra = &antinodes - &expected;
+        let missing = &expected - &antinodes;
+        assert_eq!(extra, HashSet::new(), "Have extra antinodes");
+        assert_eq!(missing, HashSet::new(), "Missing some antinodes");
+
+        assert_eq!(antinodes.len(), 34);
+    }
 }
