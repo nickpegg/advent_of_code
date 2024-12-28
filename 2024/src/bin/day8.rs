@@ -10,7 +10,10 @@ use log::debug;
 type Freq = char;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-struct Point(i64, i64);
+struct Point(u32, u32);
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+struct Distance(i64, i64);
 
 impl ops::Add for Point {
     type Output = Self;
@@ -20,11 +23,37 @@ impl ops::Add for Point {
     }
 }
 
+impl ops::Add<&Distance> for Point {
+    type Output = Option<Point>;
+
+    // Add a distance to a point. Returns None if either X or Y of the point is <0
+    fn add(self, other: &Distance) -> Self::Output {
+        let x = i64::from(self.0).checked_add(other.0)?;
+        let y = i64::from(self.1).checked_add(other.1)?;
+
+        Some(Self(x.try_into().ok()?, y.try_into().ok()?))
+    }
+}
+
+impl ops::Sub<&Distance> for Point {
+    type Output = Option<Point>;
+
+    // Subtract a distance from a point. Returns None if either X or Y of the point is <0
+    fn sub(self, other: &Distance) -> Self::Output {
+        let x = i64::from(self.0).checked_sub(other.0)?;
+        let y = i64::from(self.1).checked_sub(other.1)?;
+
+        Some(Self(x.try_into().ok()?, y.try_into().ok()?))
+    }
+}
+
 impl ops::Sub for Point {
-    type Output = Self;
+    type Output = Distance;
 
     fn sub(self, other: Self) -> Self::Output {
-        Self(self.0 - other.0, self.1 - other.1)
+        let x: i64 = i64::from(self.0) - i64::from(other.0);
+        let y: i64 = i64::from(self.1) - i64::from(other.1);
+        Distance(x, y)
     }
 }
 
@@ -38,7 +67,6 @@ impl fmt::Display for Point {
 #[derive(Clone, Debug, PartialEq)]
 struct AntennaMap {
     antennas: HashMap<Freq, HashSet<Point>>,
-    antinodes: HashSet<Point>,
     bounds: Point,
 }
 use std::num::TryFromIntError;
@@ -59,38 +87,7 @@ impl AntennaMap {
             }
         }
 
-        Ok(Self {
-            antennas,
-            antinodes: HashSet::new(),
-            bounds,
-        })
-    }
-
-    // Find all the antinodes from all the antennas and update our antinode set
-    fn update_antinodes(&mut self) {
-        for (freq, points) in &self.antennas {
-            debug!("Finding antinodes for {freq} {points:?}");
-            // TODO iterate through all 2-combinations of points
-            // Get distance between A and B
-            // Antinodes are at (A - dist) and (B + dist) as long as they're within the bounds of
-            // the Map
-            for (&a, &b) in points.iter().tuple_combinations() {
-                debug!("  Comparing {a}, {b}");
-                let distance = b - a;
-                for point in [a - distance, b + distance] {
-                    if point.0 >= 0
-                        && point.1 >= 0
-                        && point.0 <= self.bounds.0
-                        && point.1 <= self.bounds.1
-                    {
-                        debug!("    Antinode @ {point}");
-                        self.antinodes.insert(point);
-                    } else {
-                        debug!("    Point {point} outside of range {}", self.bounds);
-                    }
-                }
-            }
-        }
+        Ok(Self { antennas, bounds })
     }
 }
 
@@ -98,19 +95,40 @@ fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let s = include_str!("../../data/day8.txt");
     let input = AntennaMap::from_str(s)?;
-    println!("Part 1: {}", part1(input.clone()));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 1: {}", part1(&input).len());
+    println!("Part 2: {}", part2(&input).len());
     Ok(())
 }
 
-fn part1(mut map: AntennaMap) -> usize {
-    map.update_antinodes();
-    map.antinodes.len()
+fn part1(map: &AntennaMap) -> HashSet<Point> {
+    let mut antinodes = HashSet::new();
+    for (freq, points) in &map.antennas {
+        debug!("Finding antinodes for {freq} {points:?}");
+        // iterate through all 2-combinations of points
+        // Get distance between A and B
+        // Antinodes are at (A - dist) and (B + dist) as long as they're within the bounds of
+        // the Map
+        for (&a, &b) in points.iter().tuple_combinations() {
+            debug!("  Comparing {a}, {b}");
+            let distance = b - a;
+            for point_option in [a - &distance, b + &distance] {
+                let Some(point) = point_option else { continue };
+                if point.0 <= map.bounds.0 && point.1 <= map.bounds.1 {
+                    debug!("    Antinode @ {point}");
+                    antinodes.insert(point);
+                } else {
+                    debug!("    Point {point} outside of range {}", map.bounds);
+                }
+            }
+        }
+    }
+    antinodes
 }
 
-fn part2(map: &AntennaMap) -> u32 {
-    // TODO
-    0
+fn part2(map: &AntennaMap) -> HashSet<Point> {
+    let antinodes = HashSet::new();
+    // TODO - find antinodes, but they extend forever
+    antinodes
 }
 
 #[cfg(test)]
@@ -136,35 +154,28 @@ mod day8_tests {
     }
 
     #[test]
-    fn test_map_antinodes() {
-        let mut input = init();
-        input.update_antinodes();
-        assert!(input.antinodes.len() > 0);
-        let mut antinodes: Vec<&Point> = input.antinodes.iter().collect();
-        let expected = vec![
-            &Point(0, 7),
-            &Point(1, 5),
-            &Point(2, 3),
-            &Point(3, 1),
-            &Point(3, 6),
-            &Point(4, 2),
-            &Point(6, 0),
-            &Point(6, 5),
-            &Point(7, 7),
-            &Point(9, 4),
-            &Point(10, 2),
-            &Point(10, 10),
-            &Point(10, 11),
-            &Point(11, 0),
-        ];
-        antinodes.sort();
-        assert_eq!(antinodes, expected);
-    }
-
-    #[test]
     fn test_part1() {
         let input = init();
-        assert_eq!(part1(input), 14);
+        let mut antinodes: Vec<Point> = part1(&input).into_iter().collect();
+        antinodes.sort();
+        let expected = vec![
+            Point(0, 7),
+            Point(1, 5),
+            Point(2, 3),
+            Point(3, 1),
+            Point(3, 6),
+            Point(4, 2),
+            Point(6, 0),
+            Point(6, 5),
+            Point(7, 7),
+            Point(9, 4),
+            Point(10, 2),
+            Point(10, 10),
+            Point(10, 11),
+            Point(11, 0),
+        ];
+        assert_eq!(antinodes, expected);
+        assert_eq!(antinodes.len(), 14);
     }
 
     //#[test]
