@@ -64,7 +64,6 @@ fn part1(map: &Map) -> usize {
 }
 
 // Try walking from a position in the various directions trying to reach the max height
-// Returns the scorew, which is the number of unique peaks we find (NOT the number of paths found)
 fn walk(map: &Map, pos: Position, expected: u8, peaks: &mut HashSet<Position>) {
     debug!("Trying {pos}");
     let val = map.grid[pos.0][pos.1];
