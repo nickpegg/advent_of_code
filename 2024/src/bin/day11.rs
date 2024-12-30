@@ -1,14 +1,20 @@
+use indicatif::{ProgressBar, ProgressStyle};
+use log::debug;
 use std::fmt;
 use std::num::ParseIntError;
 
 fn main() {
     env_logger::init();
     let stones = Stones::try_from(include_str!("../../data/day11.txt")).unwrap();
-    println!("Part 1: {}", part1(stones));
+    println!("Part 1: {}", part1(stones.clone()));
+    println!("Part 2: {}", part2(stones));
 }
 
+type Stone = u64;
+
+#[derive(Clone)]
 struct Stones {
-    stones: Vec<u64>,
+    stones: Vec<Stone>,
 }
 
 impl TryFrom<&str> for Stones {
@@ -38,7 +44,7 @@ impl fmt::Display for Stones {
 }
 
 impl Iterator for Stones {
-    type Item = Vec<u64>;
+    type Item = Vec<Stone>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut new_stones = Vec::new();
@@ -66,6 +72,86 @@ fn part1(mut stones: Stones) -> usize {
         stones.next();
     }
     stones.stones.len()
+}
+
+// How many stones do we have after 75 iterations?
+//
+// I originally kept the whole stones list in memory, which is untenable once we get into the
+// hundreds of millions of stones to process - it's many gigabytes, even with memory optimization
+// (u64 -> u32, holding fewer copies in memory, etc.)
+//
+// The stones are indepedent from each other, so we can do all 75 iterations on one at a time. We
+// can do this recursively one stone at a time. The call stack should only get as deep as our
+// number of iterations.
+fn part2(stones: Stones) -> usize {
+    let mut count: usize = 0;
+    let bar = ProgressBar::new_spinner().with_style(
+        ProgressStyle::with_template("{spinner} {human_pos} [{elapsed_precise}] {per_sec}")
+            .unwrap(),
+    );
+    for stone in stones.stones {
+        count += process(stone, 75, &bar);
+    }
+    count
+}
+
+// Recursively process a stone
+fn process(stone: Stone, iterations: u8, bar: &ProgressBar) -> usize {
+    let mut count = 0;
+
+    if iterations == 0 {
+        bar.inc(1);
+        return 1;
+    }
+
+    if stone == 0 {
+        count += process(1, iterations - 1, &bar);
+    } else if count_digits(&stone) % 2 == 0 {
+        // Replace with two stones
+        let (l, r) = split_number(stone);
+        count += process(l, iterations - 1, &bar);
+        count += process(r, iterations - 1, &bar);
+    } else {
+        count += process(stone * 2024, iterations - 1, &bar);
+    }
+
+    count
+}
+
+fn count_digits(s: &Stone) -> u32 {
+    let mut num_digits = 1;
+    let mut n = s / 10;
+    while n > 0 {
+        num_digits += 1;
+        n /= 10;
+    }
+
+    num_digits
+}
+
+// Split a number by half down the middle of its digits
+// e.g. 123456 -> 123, 456
+// Will panic if given a number with an odd number of digits
+fn split_number(s: Stone) -> (Stone, Stone) {
+    let num_digits = count_digits(&s);
+    assert!(num_digits % 2 == 0);
+
+    // l is the left side, r is right side
+    // We'll basically "pop" off digits from the end by taking l % 10 to get the digit and l / 10
+    // to pop it off.
+    //
+    // We "push left" the popped digits in r by multiplying them by x, which gets multiplied by 10
+    // each time.
+    let mut l = s.clone();
+    let mut r = 0;
+    let mut x = 1;
+    for _ in 0..(num_digits / 2) {
+        r += (l % 10) * x;
+        l /= 10;
+        x *= 10;
+    }
+
+    (l, r)
 }
 
 #[cfg(test)]
@@ -98,9 +184,37 @@ mod tests {
     }
 
     #[test]
+    fn test_num_digits() {
+        init();
+        assert_eq!(count_digits(&12345), 5);
+        assert_eq!(count_digits(&12340), 5);
+        assert_eq!(count_digits(&1234), 4);
+    }
+
+    #[test]
+    fn test_split_number() {
+        init();
+        assert_eq!(split_number(12), (1, 2));
+        assert_eq!(split_number(1234), (12, 34));
+        assert_eq!(split_number(123456), (123, 456));
+    }
+
+    #[test]
     fn test_part1() {
         init();
         let stones = Stones::try_from(TEST_STONES).unwrap();
         assert_eq!(part1(stones), 55312);
+    }
+
+    #[test]
+    // Duplicate part 2 to make sure the recursive method works
+    fn test_recursive_method() {
+        init();
+        let stones = Stones::try_from(TEST_STONES).unwrap();
+        let mut count = 0;
+        for stone in stones.stones {
+            count += process(stone, 25, &ProgressBar::hidden());
+        }
+        assert_eq!(count, 55312);
     }
 }
