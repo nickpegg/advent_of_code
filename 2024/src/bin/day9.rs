@@ -73,6 +73,7 @@ impl Disk {
 
     // Returns a string based representation of the data layout, which is easier for visualization
     // and testing
+    #[cfg(test)]
     fn as_str(&self) -> String {
         let mut s = String::new();
 
