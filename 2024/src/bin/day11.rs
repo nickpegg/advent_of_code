@@ -1,5 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
-use log::debug;
+use std::collections::HashMap;
 use std::fmt;
 use std::num::ParseIntError;
 
@@ -67,11 +67,16 @@ impl Iterator for Stones {
 }
 
 // How many stones do we have after 25 iterations?
-fn part1(mut stones: Stones) -> usize {
-    for _ in 0..25 {
-        stones.next();
+fn part1(stones: Stones) -> usize {
+    let mut count: usize = 0;
+    let bar = ProgressBar::new_spinner().with_style(
+        ProgressStyle::with_template("{spinner} {human_pos} [{elapsed_precise}] {per_sec}")
+            .unwrap(),
+    );
+    for stone in stones.stones {
+        count += process(stone, 25, &mut HashMap::new(), &bar);
     }
-    stones.stones.len()
+    count
 }
 
 // How many stones do we have after 75 iterations?
@@ -90,30 +95,43 @@ fn part2(stones: Stones) -> usize {
             .unwrap(),
     );
     for stone in stones.stones {
-        count += process(stone, 75, &bar);
+        count += process(stone, 75, &mut HashMap::new(), &bar);
     }
     count
 }
 
 // Recursively process a stone
-fn process(stone: Stone, iterations: u8, bar: &ProgressBar) -> usize {
-    let mut count = 0;
+fn process(
+    stone: Stone,
+    iterations: u8,
+    cache: &mut HashMap<(Stone, u8), usize>,
+    bar: &ProgressBar,
+) -> usize {
+    match cache.get(&(stone, iterations)) {
+        Some(&count) => {
+            bar.inc(count.try_into().unwrap());
+            return count;
+        }
+        None => {}
+    }
 
     if iterations == 0 {
         bar.inc(1);
         return 1;
     }
 
+    let mut count = 0;
     if stone == 0 {
-        count += process(1, iterations - 1, &bar);
+        count += process(1, iterations - 1, cache, bar);
     } else if count_digits(&stone) % 2 == 0 {
-        // Replace with two stones
         let (l, r) = split_number(stone);
-        count += process(l, iterations - 1, &bar);
-        count += process(r, iterations - 1, &bar);
+        count += process(l, iterations - 1, cache, bar);
+        count += process(r, iterations - 1, cache, bar);
     } else {
-        count += process(stone * 2024, iterations - 1, &bar);
+        count += process(stone * 2024, iterations - 1, cache, bar);
     }
+
+    cache.insert((stone, iterations), count);
 
     count
 }
@@ -200,20 +218,23 @@ mod tests {
     }
 
     #[test]
-    fn test_part1() {
+    fn test_recursive_method_real() {
         init();
-        let stones = Stones::try_from(TEST_STONES).unwrap();
-        assert_eq!(part1(stones), 55312);
+        let stones = Stones::try_from(include_str!("../../data/day11.txt")).unwrap();
+        let mut count = 0;
+        for stone in stones.stones {
+            count += process(stone, 25, &mut HashMap::new(), &ProgressBar::hidden());
+        }
+        assert_eq!(count, 191690);
     }
 
     #[test]
-    // Duplicate part 2 to make sure the recursive method works
-    fn test_recursive_method() {
+    fn test_process_with_cache() {
         init();
         let stones = Stones::try_from(TEST_STONES).unwrap();
         let mut count = 0;
         for stone in stones.stones {
-            count += process(stone, 25, &ProgressBar::hidden());
+            count += process(stone, 25, &mut HashMap::new(), &ProgressBar::hidden());
         }
         assert_eq!(count, 55312);
     }
